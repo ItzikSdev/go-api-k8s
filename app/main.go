@@ -10,26 +10,30 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
 )
 
-func newRouter() *httprouter.Router {
+func goDotEnv(key string) string {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+	return os.Getenv(key)
+}
+func newRouter(ytApiKey string, ytChannelID string) *httprouter.Router {
 	mux := httprouter.New()
-
-	mux.GET("/youtube/channel/stats", getChannelStats())
+	mux.GET("/youtube/channel/stats", getChannelStats(ytApiKey, ytChannelID))
 
 	return mux
 }
 
-func getChannelStats() httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		w.Write([]byte("res!"))
-	}
-}
-
 func main() {
+	ytApiKey := goDotEnv("YOUTUBE_API_KEY")
+	ytChannelID := goDotEnv("YOUTUBE_CHANNEL_ID")
+
 	srv := &http.Server{
-		Handler: newRouter(),
+		Handler: newRouter(ytApiKey, ytChannelID),
 	}
 
 	idleConnsClosed := make(chan struct{})
